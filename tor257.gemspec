@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'tor257'
-  s.version     = '0.1'
+  s.version     = '0.2'
   s.date        = Time.now.getgm.to_s.split.first
   s.summary     = File.read("CHANGELOG").match(/^v[^\n]+\n((\t[^\n]+\n)+)/m)[1].split("\t").join
   s.description = 'An experimental encryption algorithm'

@@ -50,16 +50,15 @@ begin
   end
   key = Key.new($key)
   loop do
-    str = STDIN.gets
+    str = STDIN.read 4096
     if str.nil?
       exit 0
     end
-    str.chomp!
     str = $fi64 ? Base64.decode64(str) : str
     # STDERR.puts "\"#{str}\""
     m = Message.new str
     out = m.encrypt(key)
-    STDOUT.puts $fo64 ? Base64.encode64(out) : out
+    STDOUT.write $fo64 ? Base64.encode64(out) : out
   end
 rescue => err
   puts "Error: #{err.message}"
