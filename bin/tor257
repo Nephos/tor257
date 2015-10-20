@@ -8,7 +8,7 @@ module Argument
   @@opt = nil
   def self.parse
     @@opt ||= OptionParser.new do |opts|
-      opts.banner = "Usage: 302poignees -p=keyphrase | -f=keyfile [-b=fd] [-v]"
+      opts.banner = "Usage: tor257 -p=keyphrase | -f=keyfile [-b=fd] [-v]"
 
       opts.on("--verbose", "Developper mode (on STDERR)") do
         $verbose = true
@@ -39,31 +39,29 @@ module Argument
 
 end
 
-require_relative 'lib/core'
+require 'tor257'
 
-if __FILE__ == $0
-  begin
-    Argument.parse
-    include Tor257
+begin
+  Argument.parse
+  include Tor257
 
-    trap("SIGINT") do
+  trap("SIGINT") do
+    exit 0
+  end
+  key = Key.new($key)
+  loop do
+    str = STDIN.gets
+    if str.nil?
       exit 0
     end
-    key = Key.new($key)
-    loop do
-      str = STDIN.gets
-      if str.nil?
-        exit 0
-      end
-      str.chomp!
-      str = $fi64 ? Base64.decode64(str) : str
-      # STDERR.puts "\"#{str}\""
-      m = Message.new str
-      out = m.encrypt(key)
-      STDOUT.puts $fo64 ? Base64.encode64(out) : out
-    end
-  rescue => err
-    puts "Error: #{err.message}"
-    puts err.backtrace.join("\n") if $verbose
+    str.chomp!
+    str = $fi64 ? Base64.decode64(str) : str
+    # STDERR.puts "\"#{str}\""
+    m = Message.new str
+    out = m.encrypt(key)
+    STDOUT.puts $fo64 ? Base64.encode64(out) : out
   end
+rescue => err
+  puts "Error: #{err.message}"
+  puts err.backtrace.join("\n") if $verbose
 end
