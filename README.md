@@ -1,7 +1,14 @@
+# Installation
+
+```bash
+gem install tor257
+```
+
 # Usage
 
-```text
-Usage: 302poignees -p=keyphrase | -f=keyfile [-b=fd] [-v]
+```bash
+$>  tor257 --help
+Usage: tor257 -p=keyphrase | -f=keyfile [-b=fd] [-v]
         --verbose                    Developper mode (on STDERR)
         --passphrase=pass            Key (Passphrase)
         --file=keyfile               Key (File)
