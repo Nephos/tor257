@@ -1,27 +1,34 @@
 # coding: utf-8
 
-def TOR257_KEYS(k)
+require_relative 'Integer'
+
+def TOR257_KEYS(k, offsets)
   [
-    ((k << 0) & 0xff) + ((k & 0b00000000) >> 8),
-    ((k << 2) & 0xff) + ((k & 0b11000000) >> 6),
-    ((k << 5) & 0xff) + ((k & 0b11111000) >> 3),
-    ((k << 7) & 0xff) + ((k & 0b11111110) >> 1)
+    k.ror(0 - offsets[0], 8),
+    k.ror(-2 - offsets[1], 8),
+    k.ror(-5 - offsets[2], 8),
+    k.ror(-7 - offsets[3], 8),
   ]
 end
 
-def TOR257_KEY(k)
-  TOR257_KEYS(k).inject(&:^)
+def TOR257_KEY(k, offsets)
+  TOR257_KEYS(k, offsets).inject(&:^)
 end
 
 # @param b [Integer 8b]
 # @param k [Integer 8b]
-def TOR257(b, k)
-  return b ^ TOR257_KEY(k)
+def TOR257(b, k, offsets)
+  return b ^ TOR257_KEY(k, offsets)
 end
 
 module Tor257
 
   class Key < String
+
+    def initialize s
+      super(s)
+      raise ArgumentError, "Key must be at least 32 bits strong" if size() < 4
+    end
 
     def subkey(i)
       # return self[i % self.size].bytes
@@ -55,17 +62,25 @@ module Tor257
 
   end
 
+  # The message can be cut in 32 bits blocs
   class Message < String
 
     def encrypt(key)
       raise ArgumentError unless key.is_a? Key
       i = 0
-      out = Message.new(self.bytes.map do |b|
-                          skey = key.subkey(i)
-                          skey.each{|k| b = TOR257(b, k) }
-                          i += 1
-                          b.chr
-                        end.join)
+      rotate_matrix = [1, 2, 4, 8]
+      out = self.bytes.map do |b|
+        skey = key.subkey(i)
+        STDERR.write "[#{b}]\t+ [#{skey}\t>> #{rotate_matrix}]\t-> " if $verbose
+        skey.each_with_index do |k|
+          b = TOR257(b, k, rotate_matrix)
+        end
+        STDERR.write " [#{b}]\n" if $verbose
+        i += 1
+        rotate_matrix.rotate! 1 if i % 4 == 0 # bloc of 32
+        b.chr
+      end.join
+      out = Message.new(out)
       out
     end
 

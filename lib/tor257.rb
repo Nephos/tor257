@@ -1,1 +1,1 @@
-require_relative 'tor257/core.rb'
+require_relative 'tor257/core'

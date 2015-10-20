@@ -8,6 +8,7 @@ Gem::Specification.new do |s|
   s.email       = ['poulet_a@epitech.eu']
   s.files       = %w(
 lib/tor257.rb
+lib/tor257/Integer.rb
 lib/tor257/core.rb
 
 README.md

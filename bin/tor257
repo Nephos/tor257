@@ -10,8 +10,12 @@ module Argument
     @@opt ||= OptionParser.new do |opts|
       opts.banner = "Usage: tor257 -p=keyphrase | -f=keyfile [-b=fd] [-v]"
 
-      opts.on("--verbose", "Developper mode (on STDERR)") do
+      opts.on("--verbose", "More verbose") do
         $verbose = true
+      end
+
+      opts.on("--debug", "Developper mode (on STDERR)") do
+        $debug = true
       end
 
       opts.on("--passphrase=pass", "Key (Passphrase)") do |key|
@@ -39,28 +43,37 @@ module Argument
 
 end
 
-require 'tor257'
-
 begin
   Argument.parse
+
+  if $debug # to load local env
+    load Dir.pwd + '/lib/tor257.rb'
+  else
+    require 'tor257'
+  end
+
   include Tor257
 
   trap("SIGINT") do
     exit 0
   end
+
   key = Key.new($key)
+  i = 0
   loop do
     str = STDIN.read 4096
     if str.nil?
       exit 0
     end
     str = $fi64 ? Base64.decode64(str) : str
+    STDERR.puts "Bloc ##{i} [#{str}] with [#{key}]" if $verbose
     # STDERR.puts "\"#{str}\""
     m = Message.new str
     out = m.encrypt(key)
     STDOUT.write $fo64 ? Base64.encode64(out) : out
+    i += 1
   end
 rescue => err
-  puts "Error: #{err.message}"
-  puts err.backtrace.join("\n") if $verbose
+  STDERR.puts "Error: #{err.message}"
+  STDERR.puts err.backtrace.join("\n") if $verbose
 end
