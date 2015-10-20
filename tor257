@@ -1,0 +1,59 @@
+#!/usr/bin/env ruby
+# coding: utf-8
+
+require 'optparse'
+
+module Argument
+
+  @@opt = nil
+  def self.parse
+    @@opt ||= OptionParser.new do |opts|
+      opts.banner = "Usage: 302poignees -k=key [-b=fd] [-v]"
+
+      opts.on("--verbose", "Developper mode (on STDERR)") do
+        $verbose = true
+      end
+
+      opts.on("--key=pass", "Key (Passphrase)") do |key|
+        $key = key
+      end
+
+      opts.on("--base64=fd", "Output in ASCII Base64") do |fd|
+        $fi64 ||= (fd == "in")
+        $fo64 ||= (fd == "out")
+        require 'base64'
+      end
+
+    end.parse!
+
+    raise ArgumentError, "Key is required" unless $key
+    return @@opt
+
+  end
+
+end
+
+require_relative 'lib/core'
+
+if __FILE__ == $0
+  Argument.parse
+  include Tor257
+
+  trap("SIGINT") do
+    exit 0
+  end
+  key = Key.new($key)
+  loop do
+    str = STDIN.gets
+    if str.nil?
+      exit 0
+    end
+    str.chomp!
+    str = $fi64 ? Base64.decode64(str) : str
+    # STDERR.puts "\"#{str}\""
+    m = Message.new str
+    out = m.encrypt(key)
+    STDOUT.puts $fo64 ? Base64.encode64(out) : out
+  end
+
+end
