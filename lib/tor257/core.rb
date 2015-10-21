@@ -68,7 +68,7 @@ module Tor257
     def encrypt(key)
       raise ArgumentError unless key.is_a? Key
       i = 0
-      rotate_matrix = [1, 2, 4, 8]
+      rotate_matrix = [0, 2, 5, 7]
       out = self.bytes.map do |b|
         skey = key.subkey(i)
         STDERR.write "[#{b}]\t+ [#{skey}\t>> #{rotate_matrix}]\t-> " if $verbose
