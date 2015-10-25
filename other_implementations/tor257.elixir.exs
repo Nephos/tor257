@@ -33,23 +33,24 @@ defmodule Tor257 do
     b ^^^ k
   end
 
-	def subkeys(k, i, ksize) do
-		subkeys(k, [], i, 0, 0, ksize)
-	end
+  def subkeys(k, i, ksize) do
+    subkeys(k, [], i, 0, 0, ksize)
+  end
 
-	def subkeys(key, subkey, idx, used, offset, ksize) when used >= ksize do
-		subkey
-	end
+  #def subkeys(key, subkey, idx, used, offset, ksize) when used >= ksize do
+  def subkeys(_, subkey, _, used, _, ksize) when used >= ksize do
+    subkey
+  end
 
-	def subkeys(key, subkey, idx, used, offset, ksize) do
-		new_offset = case {offset} do
-			{0} -> 2
-			{3} -> 2
-			{2} -> 3
-		end
-		current = [elem(key, (rem idx, ksize))]
-		subkeys(key, subkey ++ current, idx + offset, used + offset, new_offset, ksize)
-	end
+  def subkeys(key, subkey, idx, used, offset, ksize) do
+    new_offset = case {offset} do
+      {0} -> 2
+      {3} -> 2
+      {2} -> 3
+    end
+    current = [elem(key, (rem idx, ksize))]
+    subkeys(key, subkey ++ current, idx + offset, used + offset, new_offset, ksize)
+  end
 end
 
 # TODO: read with -p and -k
@@ -71,10 +72,10 @@ m = String.to_char_list m
 klist = Tuple.to_list(k)
 subkeys = Enum.map(Enum.with_index(klist), fn char_with_index ->
   idx = elem char_with_index, 1
-  char = elem char_with_index, 0
-	sk = Tor257.subkeys(k, idx, Enum.count(klist))
-	IO.puts "Key: create subkey #{idx}: #{sk}"
-	List.to_tuple(sk)
+  #char = elem char_with_index, 0
+  sk = Tor257.subkeys(k, idx, Enum.count(klist))
+  IO.puts "Key: create subkey #{idx}: #{sk}"
+  List.to_tuple(sk)
 end)
 
 Enum.map(Enum.with_index(m), fn char_with_index ->
