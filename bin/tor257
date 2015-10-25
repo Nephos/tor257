@@ -8,7 +8,7 @@ module Argument
   @@opt = nil
   def self.parse
     @@opt ||= OptionParser.new do |opts|
-      opts.banner = "Usage: tor257 -p=keyphrase | -f=keyfile [-b=fd] [-v]"
+      opts.banner = "(version 0.3) Usage: tor257 -p=keyphrase | -f=keyfile [-b=fd] [-v]"
 
       opts.on("--verbose", "More verbose") do
         $verbose = true
