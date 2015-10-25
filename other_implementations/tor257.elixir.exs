@@ -15,42 +15,46 @@ defmodule Tor257 do
     (high ||| low ) &&& 0xFF
   end
 
-  def keys(k, offsets) do
-    {
-      rol8(k, elem(offsets, 0) + 0),
-      rol8(k, elem(offsets, 1) + 2),
-      rol8(k, elem(offsets, 2) + 5),
-      rol8(k, elem(offsets, 3) + 7),
-    }
-  end
+	defmodule Key do
 
-  def key(k, offsets) do
-    Enum.reduce(Tuple.to_list(keys(k, offsets)), 0, &bxor/2)
-  end
+		def encrypt(b, k, offsets) do
+			k = rotate_key(k, offsets)
+			b ^^^ k
+		end
 
-  def execute(b, k, offsets) do
-    k = key(k, offsets)
-    b ^^^ k
-  end
+		def rotate_keys(k, offsets) do
+			{
+				Tor257.rol8(k, elem(offsets, 0) + 0),
+				Tor257.rol8(k, elem(offsets, 1) + 2),
+				Tor257.rol8(k, elem(offsets, 2) + 5),
+				Tor257.rol8(k, elem(offsets, 3) + 7),
+			}
+		end
 
-  def subkeys(k, i, ksize) do
-    subkeys(k, [], i, 0, 0, ksize)
-  end
+		def rotate_key(k, offsets) do
+			Enum.reduce(Tuple.to_list(rotate_keys(k, offsets)), 0, &bxor/2)
+		end
 
-  #def subkeys(key, subkey, idx, used, offset, ksize) when used >= ksize do
-  def subkeys(_, subkey, _, used, _, ksize) when used >= ksize do
-    subkey
-  end
+		def subkeys(k, i, ksize) do
+			subkeys(k, [], i, 0, 0, ksize)
+		end
 
-  def subkeys(key, subkey, idx, used, offset, ksize) do
-    new_offset = case {offset} do
-      {0} -> 2
-      {3} -> 2
-      {2} -> 3
-    end
-    current = [elem(key, (rem idx, ksize))]
-    subkeys(key, subkey ++ current, idx + offset, used + offset, new_offset, ksize)
-  end
+		#def subkeys(key, subkey, idx, used, offset, ksize) when used >= ksize do
+		def subkeys(_, subkey, _, used, _, ksize) when used >= ksize do
+			subkey
+		end
+
+		def subkeys(key, subkey, idx, used, offset, ksize) do
+			new_offset = case {offset} do
+										 {0} -> 2
+										 {3} -> 2
+										 {2} -> 3
+									 end
+			current = [elem(key, (rem idx, ksize))]
+			subkeys(key, subkey ++ current, idx + offset, used + offset, new_offset, ksize)
+		end
+	end
+
 end
 
 # TODO: read with -p and -k
@@ -73,7 +77,7 @@ klist = Tuple.to_list(k)
 subkeys = Enum.map(Enum.with_index(klist), fn char_with_index ->
   idx = elem char_with_index, 1
   #char = elem char_with_index, 0
-  sk = Tor257.subkeys(k, idx, Enum.count(klist))
+  sk = Tor257.Key.subkeys(k, idx, Enum.count(klist))
   IO.puts "Key: create subkey #{idx}: #{sk}"
   List.to_tuple(sk)
 end)
@@ -84,7 +88,7 @@ Enum.map(Enum.with_index(m), fn char_with_index ->
   kbyte = elem k, (rem idx, k_size)
   # TODO: finish implementation with bloc rotations etc.
   offsets = {0, 2, 5, 7}
-  encrypted = Tor257.execute(char, kbyte, offsets)
+  encrypted = Tor257.Key.encrypt(char, kbyte, offsets)
   # TODO: remove debug
   IO.puts "#{idx} => #{char} xor #{kbyte} = #{encrypted}"
 end)
