@@ -48,6 +48,25 @@ defmodule Tor257 do
     k = key(k, offsets)
     b ^^^ k
   end
+
+	def subkeys(k, i, ksize) do
+		subkeys(k, [], i, 0, 0, ksize)
+	end
+
+	def subkeys(key, subkey, idx, used, offset, ksize) when used >= ksize do
+		subkey
+	end
+
+	def subkeys(key, subkey, idx, used, offset, ksize) do
+		new_offset = case {offset} do
+			{0} -> 2
+			{3} -> 2
+			{2} -> 3
+		end
+		current = [elem(key, (rem idx, ksize))]
+		IO.puts("Current: #{subkey}, #{current}, #{idx}")
+		subkeys(key, subkey ++ current, idx + offset, used + offset, new_offset, ksize)
+	end
 end
 
 Enum.map(Enum.with_index(m), fn char_with_index ->
@@ -59,4 +78,12 @@ Enum.map(Enum.with_index(m), fn char_with_index ->
   encrypted = Tor257.execute(char, kbyte, offsets)
   # TODO: remove debug
   IO.puts "#{idx} => #{char} xor #{kbyte} = #{encrypted}"
+end)
+
+klist = Tuple.to_list(k)
+Enum.map(Enum.with_index(klist), fn char_with_index ->
+  idx = elem char_with_index, 1
+  char = elem char_with_index, 0
+	sk = Tor257.subkeys(k, idx, Enum.count(klist))
+	IO.puts "Key: create subkey #{idx}: #{sk}"
 end)

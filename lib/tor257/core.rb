@@ -31,36 +31,22 @@ module Tor257
     end
 
     def subkey(i)
-      # return self[i % self.size].bytes
-      @koff = nil
-      @i = 0
-      _subkey(i % self.size)
+      raise ArgumentError unless i.is_a? Integer
+      _subkey([], i % self.size, 0, 0)
     end
 
     private
-    # TODO: with tail_recursion ;)
-    def _subkey(i)
-      raise ArgumentError unless i.is_a? Integer
-      koff_update
-      if @i >= self.size
-        @koff = nil
-        return []
+    def _subkey(sk, idx, used, offset)
+      # puts "Current sk: #{sk}, idx: #{idx}, used: #{used}, offset: #{offset}"
+      if used >= self.size
+        # puts "Subkey end: #{sk}"
+        return sk
       end
-      i += @koff
-      @i += @koff
-      return [self.bytes[i % self.size]] + _subkey(i)
-      # return self.bytes[i % self.size]
-    end
-
-    def koff_update
-      case @koff
-      when nil
-        @koff = 0
-      when 0, 5
-        @koff = 2
-      when 2
-        @koff = 5
-      end
+      new_offset = ((offset == 0 or offset == 3) ? 2 : 3)
+      # puts "New offset: #{new_offset} from #{offset}"
+      current = [self.bytes[idx % self.size]]
+      # puts "Current v: #{current}"
+      return _subkey(sk + current, idx + offset, used + offset, new_offset)
     end
 
   end
