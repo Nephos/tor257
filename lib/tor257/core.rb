@@ -33,18 +33,21 @@ module Tor257
     def subkey(i)
       # return self[i % self.size].bytes
       @koff = nil
+      @i = 0
       _subkey(i % self.size)
     end
 
     private
+    # TODO: with tail_recursion ;)
     def _subkey(i)
       raise ArgumentError unless i.is_a? Integer
       koff_update
-      if i >= self.size
+      if @i >= self.size
         @koff = nil
         return []
       end
       i += @koff
+      @i += @koff
       return [self.bytes[i % self.size]] + _subkey(i)
       # return self.bytes[i % self.size]
     end
